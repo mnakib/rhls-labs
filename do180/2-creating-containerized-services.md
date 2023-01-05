@@ -13,3 +13,5 @@ redhat.com registry.access.redhat.com/rhel This plat... 0
 ...
 ```
 
+After the image is found, you may **pull** it.
+
