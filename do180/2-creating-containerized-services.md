@@ -65,6 +65,9 @@ exit
 $
 ```
 
+Use the `-d` option to run the container in **detached mode**.
+
+`$ podman run -d -p 8080 registry.redhat.io/rhel8/httpd-24`
 
 
 
