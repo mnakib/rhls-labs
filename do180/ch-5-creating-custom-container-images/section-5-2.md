@@ -2,7 +2,7 @@
 
 0. Prepare the lab
 
-`$ lab dockerfile-create start`
+`$ lab dockerfile-create start`  
 
 
 1. Create the Apache Containerfile
