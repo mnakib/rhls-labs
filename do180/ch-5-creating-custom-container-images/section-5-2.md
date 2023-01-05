@@ -45,6 +45,16 @@ localhost/do180/apache               latest  16c8493a19ad  45 seconds ago  257 M
 ```
 
 
+3. Run the Apache container.
+
+`$ podman run --name lab-apache -d -p 10080:80 do180/apache`
+
+`$ podman ps`
+
+`$ curl -s 127.0.0.1:10080`
+
+
+
 
 # Lesson: Building Custom Container Images with Containerfiles
 
