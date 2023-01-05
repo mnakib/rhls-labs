@@ -8,7 +8,8 @@ Container images are available from image registries that allow users to search 
 
 ```
 $ podman search rhel
-'INDEX      NAME                            DESCRIPTION  STARS OFFICIAL AUTOMATED
-redhat.com registry.access.redhat.com/rhel This plat...
+INDEX      NAME                            DESCRIPTION  STARS OFFICIAL AUTOMATED
+redhat.com registry.access.redhat.com/rhel This plat... 0
+...
 ```
 
