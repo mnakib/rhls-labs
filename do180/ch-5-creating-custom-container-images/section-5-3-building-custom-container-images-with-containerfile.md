@@ -1,8 +1,8 @@
 Chapter 5. Creating Custom Container Images
 
-[- Designing Custom Container Images]
-[- Building Custom Container Images with Containerfiles]
-[- Guided Exercise: Creating a Basic Apache Container Image]
+- [Designing Custom Container Images]
+- [Building Custom Container Images with Containerfiles]
+- [Guided Exercise: Creating a Basic Apache Container Image]
 
 
 # Building Custom Container Images with Containerfiles
