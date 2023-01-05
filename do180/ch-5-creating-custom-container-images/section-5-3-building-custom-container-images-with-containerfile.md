@@ -23,11 +23,11 @@ Images can be found in container registries. Some container registries are:
 
 - [Quay.io](https://quay.io/search)
 
-> [Quay.io](https://quay.io/search) is an advanced container repository from CoreOS optimized for team collaboration
+>> An advanced container repository from CoreOS optimized for team collaboration
 
 - [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/explore)
 
-> The [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/explore) is a repository of reliable, tested, certified, and curated collection of container images built on versions of RHEL and related systems.
+> A repository of reliable, tested, certified, and curated collection of container images built on versions of RHEL and related systems.
 
 - [Docker Hub]( https://hub.docker.com)
 
