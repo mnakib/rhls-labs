@@ -91,7 +91,7 @@ The `podman build` command processes the Containerfile and builds a new image ba
 > **DIR** is the path to the working directory
 
 
-     `$ podman build -t httpd-custom:v0.1 .`
+     $ podman build -t httpd-custom:v0.1 .
 
 
 
