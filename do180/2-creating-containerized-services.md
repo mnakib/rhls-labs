@@ -44,6 +44,6 @@ registry.access.redhat.com/rhel   latest   699d44bc6ea2   4 days ago    214MB
 
 The `podman run` runs a container locally based on an image. At a **minimum**, the command requires the **name of the image** to execute in the container.
 
-
+    $ podman run httpd
 
 
