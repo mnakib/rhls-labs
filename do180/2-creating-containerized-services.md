@@ -54,5 +54,17 @@ To **set the entry point** for this container, run the command right after the n
 Hello world!
 ```
 
+`$ podman run -it ubi8/ubi:8.3 /bin/bash`
+```
+bash-4.2# ls
+…
+	bash-4.2# whoami
+root
+bash-4.2# exit
+exit
+$
+```
+
+
 
 
