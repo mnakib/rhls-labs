@@ -29,6 +29,10 @@ Images can be found in container registries. Some container registries are:
 
 > The [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/explore) is a repository of reliable, tested, certified, and curated collection of container images built on versions of RHEL and related systems.
 
+- [Docker Hub]( https://hub.docker.com)
+
+> Be careful with images from [Docker Hub]( https://hub.docker.com). Anyone can create a Docker Hub account and publish container images there. There are no general assurances about quality and security;
+
 
  
 
