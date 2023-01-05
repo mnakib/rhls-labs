@@ -1,4 +1,6 @@
-# Building Base Containers
+# Building Custom Container Images with Containerfiles
+
+## Building Base Containers
 
 A `Containerfile` is a mechanism to automate the building of container images. Building an image from a Containerfile is a three-step process.
 
@@ -7,14 +9,14 @@ A `Containerfile` is a mechanism to automate the building of container images. B
 3. Building the image with Podman
 
 
-## Creating a working directory
+### Creating a working directory
 
 The working directory is the directory containing all files needed to build the image.
 
 Creating an empty working directory is good practice to avoid incorporating unnecessary files into the image.
 
 
-## Writing the Containerfile
+### Writing the Containerfile
 
 The file name must be `Containerfile` or `Dockerfile` and contains (case-sensitive) instructions to build the custom image.
 
@@ -44,7 +46,7 @@ CMD ["-D", "FOREGROUND"]
 
 The Containerfile should contain at most one `ENTRYPOINT` and one `CMD` instruction. If both are present, the **last** instruction takes **precedence**.
 
-`ENTRYPOINT` cannot be overwritten. `CMD` can be overwritten.
+`ENTRYPOINT` **cannot** be overwritten. `CMD` **can** be overwritten.
 
 Examples below:
 
@@ -80,13 +82,18 @@ Tuesday
 
 
 
-## Building the image with Podman
+### Building the image with Podman
 
 The `podman build` command processes the Containerfile and builds a new image based on the instructions it contains
 
 `$ podman build -t NAME:TAG DIR`
 
 > **DIR** is the path to the working directory
+
+
+     `$ podman build -t httpd-custom:v0.1 .`
+
+
 
 
 
