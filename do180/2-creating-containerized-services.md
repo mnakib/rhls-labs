@@ -13,5 +13,20 @@ redhat.com registry.access.redhat.com/rhel This plat... 0
 ...
 ```
 
+
 After the image is found, you may **pull** it.
+
+`$ podman pull rhel`
+```
+Trying to pull registry.access.redhat.com/rhel...
+Getting image source signatures
+Copying blob sha256:
+...
+```
+
+
+Container image syntax are named based on below syntax:
+
+> registry-name/user-name/image-name:tag
+
 
