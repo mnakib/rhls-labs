@@ -30,3 +30,9 @@ Container image syntax are named based on below syntax:
 > **registry-name/user-name/image-name:tag**
 
 
+
+To display **locally stored images**
+
+`$ podman images`
+
+
