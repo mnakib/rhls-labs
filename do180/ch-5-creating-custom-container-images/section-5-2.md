@@ -1,4 +1,51 @@
-# Building Custom Container Images with Containerfiles
+# Guided Exercise: Creating a Basic Apache Container Image
+
+0. Prepare the lab
+
+`$ lab dockerfile-create start`
+
+
+1. Create the Apache Containerfile
+
+`$ vim ~/DO180/labs/dockerfile-create/Containerfile`
+
+```
+FROM ubi8/ubi:8.5
+
+MAINTAINER Your Name <youremail>
+
+LABEL description="A custom Apache container based on UBI 8"
+
+RUN yum install -y httpd && \
+    yum clean all
+
+RUN echo "Hello from Containerfile" > /var/www/html/index.html
+
+EXPOSE 80
+
+CMD ["httpd", "-D", "FOREGROUND"]
+```
+
+
+2. Build and verify the Apache container image
+
+`$ cd ~/DO180/labs/dockerfile-create`
+
+`$ podman build --layers=false -t do180/apache`
+
+> The `--layers=false` is instruct Podman to delete the anonymous intermediate layers.
+
+`$ podman images`
+
+```
+REPOSITORY                           TAG     IMAGE ID      CREATED         SIZE
+localhost/do180/apache               latest  16c8493a19ad  45 seconds ago  257 MB
+...
+```
+
+
+
+# Lesson: Building Custom Container Images with Containerfiles
 
 ## Building Base Containers
 
@@ -91,7 +138,7 @@ The `podman build` command processes the Containerfile and builds a new image ba
 > **DIR** is the path to the working directory
 
 
-     $ podman build -t httpd-custom:v0.1 .
+`$ podman build -t httpd-custom:v0.1 .`
 
 
 
