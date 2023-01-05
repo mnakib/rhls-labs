@@ -6,8 +6,31 @@
 
 # Designing Custom Container Images
 
+## Reusing Existing Containerfiles
+
 One way to creating container images is to commit a running container. However, this method doesn't follow best practices, like maintainability, automation of building, and repeatability.
 
+Another method is by using `Containerfiles`, which makes sharing, versioning , reusing easy!
+
+Containerfiles also make it easy to **extend one image**, called a **child image**, from another image, called a **parent image**.
+
+Images may be **shared** and reused by publishing them on **image registries** like `quay.io`.
+
+
+## Searching for Images
+
+Images can be found in container registries. Some container registries are:
+
+- [Quay.io](https://quay.io/search)
+
+> [Quay.io](https://quay.io/search) is an advanced container repository from CoreOS optimized for team collaboration
+
+- [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/explore)
+
+> The [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/explore) is a repository of reliable, tested, certified, and curated collection of container images built on versions of RHEL and related systems.
+
+
+ 
 
 
 # Building Custom Container Images with Containerfiles
