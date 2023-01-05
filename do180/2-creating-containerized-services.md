@@ -44,6 +44,15 @@ registry.access.redhat.com/rhel   latest   699d44bc6ea2   4 days ago    214MB
 
 The `podman run` runs a container locally based on an image. At a **minimum**, the command requires the **name of the image** to execute in the container.
 
-    $ podman run httpd
+`$ podman run httpd`
+
+
+To **set the entry point** for this container, run the command right after the name of the image.
+
+`$ podman run ubi8/ubi:8.3 echo 'Hello world!'`
+```
+Hello world!
+```
+
 
 
