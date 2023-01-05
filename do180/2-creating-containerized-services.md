@@ -60,6 +60,7 @@ bash-4.2# ls
 …
 bash-4.2# whoami
 root
+...
 bash-4.2# exit
 exit
 $
