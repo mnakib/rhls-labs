@@ -34,5 +34,16 @@ Container image syntax are named based on below syntax:
 To display **locally stored images**
 
 `$ podman images`
+```
+REPOSITORY                        TAG      IMAGE ID       CREATED       SIZE
+registry.access.redhat.com/rhel   latest   699d44bc6ea2   4 days ago    214MB
+...
+```
+
+## Running Containers
+
+The `podman run` runs a container locally based on an image. At a **minimum**, the command requires the **name of the image** to execute in the container.
+
+
 
 
