@@ -27,14 +27,33 @@ Images can be found in container registries. Some container registries are:
 
 - [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/explore)
 
-> A repository of reliable, tested, certified, and curated collection of container images built on versions of RHEL and related systems.
+>> A repository of reliable, tested, certified, and curated collection of container images built on versions of RHEL and related systems.
 
 - [Docker Hub]( https://hub.docker.com)
 
-> Be careful with images from [Docker Hub]( https://hub.docker.com). Anyone can create a Docker Hub account and publish container images there. There are no general assurances about quality and security;
+>> Be careful with images from [Docker Hub]( https://hub.docker.com). Anyone can create a Docker Hub account and publish container images there. There are no general assurances about quality and security;
 
 
  
+## Describing How to Use the OpenShift Source-to-Image Tool
+
+How to use the s2i with docker is described in this link
+	
+Below example shows how to build: 
+
+- A new container image from the `python-35-rhel7builder` image that is available in the Red Hat Container Registry, and 
+- A test application available from a public Git repository in the GitHub [sti-python](https://github.com/sclorg/s2i-python-container) repository, in the `3.5/test/setup-test-app/` directory. 
+
+
+`# yum install source-to-image`
+
+
+`# docker pull registry.access.redhat.com/rhscl/python-35-rhel7`
+
+`# s2i build https://github.com/openshift/sti-python.git --context-dir=3.5/test/setup-test-app/ rhscl/python-35-rhel7 python-35-rhel7-app`
+
+
+
 
 
 # Building Custom Container Images with Containerfiles
