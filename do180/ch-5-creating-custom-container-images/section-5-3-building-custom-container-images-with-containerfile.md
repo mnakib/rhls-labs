@@ -1,8 +1,8 @@
 Chapter 5. Creating Custom Container Images
 
-- [Designing Custom Container Images]
+- [Designing Custom Container Images](https://github.com/mnakib/rhls/blob/main/do180/ch-5-creating-custom-container-images/section-5-3-building-custom-container-images-with-containerfile.md#designing-custom-container-images)
 - [Building Custom Container Images with Containerfiles](https://github.com/mnakib/rhls/blob/main/do180/ch-5-creating-custom-container-images/section-5-3-building-custom-container-images-with-containerfile.md#building-custom-container-images-with-containerfiles)
-- [Guided Exercise: Creating a Basic Apache Container Image]
+- [Guided Exercise: Creating a Basic Apache Container Image](https://github.com/mnakib/rhls/blob/main/do180/ch-5-creating-custom-container-images/section-5-3-building-custom-container-images-with-containerfile.md#guided-exercise-creating-a-basic-apache-container-image)
 
 # Designing Custom Container Images
 
