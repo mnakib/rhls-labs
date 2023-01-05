@@ -1,62 +1,11 @@
-# Guided Exercise: Creating a Basic Apache Container Image
+Chapter 5. Creating Custom Container Images
 
-0. Prepare the lab
-
-`$ lab dockerfile-create start`
-  
-
-
-1. Create the Apache Containerfile
-
-`$ vim ~/DO180/labs/dockerfile-create/Containerfile`
-
-```
-FROM ubi8/ubi:8.5
-
-MAINTAINER Your Name <youremail>
-
-LABEL description="A custom Apache container based on UBI 8"
-
-RUN yum install -y httpd && \
-    yum clean all
-
-RUN echo "Hello from Containerfile" > /var/www/html/index.html
-
-EXPOSE 80
-
-CMD ["httpd", "-D", "FOREGROUND"]
-```
+[Designing Custom Container Images]
+[Building Custom Container Images with Containerfiles]
+[Guided Exercise: Creating a Basic Apache Container Image]
 
 
-2. Build and verify the Apache container image
-
-`$ cd ~/DO180/labs/dockerfile-create`
-
-`$ podman build --layers=false -t do180/apache`
-
-> The `--layers=false` is instruct Podman to delete the anonymous intermediate layers.
-
-`$ podman images`
-
-```
-REPOSITORY                           TAG     IMAGE ID      CREATED         SIZE
-localhost/do180/apache               latest  16c8493a19ad  45 seconds ago  257 MB
-...
-```
-
-
-3. Run the Apache container.
-
-`$ podman run --name lab-apache -d -p 10080:80 do180/apache`
-
-`$ podman ps`
-
-`$ curl -s 127.0.0.1:10080`
-
-
-
-
-# Lesson: Building Custom Container Images with Containerfiles
+# Building Custom Container Images with Containerfiles
 
 ## Building Base Containers
 
@@ -151,6 +100,63 @@ The `podman build` command processes the Containerfile and builds a new image ba
 
 `$ podman build -t httpd-custom:v0.1 .`
 
+
+
+
+# Guided Exercise: Creating a Basic Apache Container Image
+
+0. Prepare the lab
+
+`$ lab dockerfile-create start`
+  
+
+
+1. Create the Apache Containerfile
+
+`$ vim ~/DO180/labs/dockerfile-create/Containerfile`
+
+```
+FROM ubi8/ubi:8.5
+
+MAINTAINER Your Name <youremail>
+
+LABEL description="A custom Apache container based on UBI 8"
+
+RUN yum install -y httpd && \
+    yum clean all
+
+RUN echo "Hello from Containerfile" > /var/www/html/index.html
+
+EXPOSE 80
+
+CMD ["httpd", "-D", "FOREGROUND"]
+```
+
+
+2. Build and verify the Apache container image
+
+`$ cd ~/DO180/labs/dockerfile-create`
+
+`$ podman build --layers=false -t do180/apache`
+
+> The `--layers=false` is instruct Podman to delete the anonymous intermediate layers.
+
+`$ podman images`
+
+```
+REPOSITORY                           TAG     IMAGE ID      CREATED         SIZE
+localhost/do180/apache               latest  16c8493a19ad  45 seconds ago  257 MB
+...
+```
+
+
+3. Run the Apache container.
+
+`$ podman run --name lab-apache -d -p 10080:80 do180/apache`
+
+`$ podman ps`
+
+`$ curl -s 127.0.0.1:10080`
 
 
 
