@@ -1,0 +1,9 @@
+# Building Custom Container Images with Containerfiles
+
+# Building Base Containers
+
+A `Containerfile` is a mechanism to automate the building of container images. Building an image from a Containerfile is a three-step process.
+
+1. Creating a working directory
+2. Writing the Containerfile
+3. Building the image with Podman
