@@ -28,7 +28,9 @@ The flow would be:
 
 2- Create a node network configuration policy. For instance, a **NodeNetworkConfigurationPolicy** to configure a new Linux bridge **br0** with the **ens4** Ethernet device as the port.
 
-3- 
+3- Create a network attachment definition. For instance, a **NetworkAttachmentDefinition** with a name **database-network** of type **Linux bridge** for the bridge name **br0**.
+
+4- Attach the network attachment definition to a VM. For instance, attach the **NetworkAttachmentDefinition** named **database-network** to the network **database-network** of type **Bridge**.
 
 
 
