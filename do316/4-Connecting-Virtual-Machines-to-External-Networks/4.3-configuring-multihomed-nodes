@@ -1,0 +1,35 @@
+# The Kubernetes NMState Operator
+   
+The **NMState Operator** is a Kubernetes operator that provides a way to manage and configure network interfaces on nodes within a Kubernetes cluster. It uses the NMState library to perform state-driven network configuration and reporting
+
+The operator reports the node network configuration, validates configuration syntax, and applies network configuration changes without a node reboot.
+
+The NMState operator provides three API resources for managing the network configuration:
+
+- **NodeNetworkState:** exists on each cluster node and is periodically updated to include the state of the network for that node
+
+- **NodeNetworkConfigurationPolicy:** describes the intended network configuration for OpenShift nodes. You can create and manage node network interfaces, such as declaring a Linux bridge, with a node network configuration policy.
+
+- NodeNetworkConfigurationEnactment
+
+
+Deploy the Kubernetes NMState operator
+
+Install the operator
+
+**Operators** → **OperatorHub** → Search _nmstate_ then install **Kubernetes NMState Operator**
+
+Create an NMState instance using the default values
+
+
+The flow would be:
+
+1- Label the nodes. For instance _external-network=true_.
+
+2- Create a node network configuration policy. For instance, a **NodeNetworkConfigurationPolicy** to configure a new Linux bridge **br0** with the **ens4** Ethernet device as the port.
+
+3- 
+
+
+
+
