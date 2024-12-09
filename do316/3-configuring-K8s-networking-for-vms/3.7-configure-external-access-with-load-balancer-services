@@ -1,0 +1,97 @@
+# Exposing Non-HTTP Services
+
+In some scenarios, ingresses and routes are not sufficient to expose the service that a VM provides. Other text-based protocols, such as SMTP, POP3, and IMAP, cannot be exposed with routes and ingress resources. Binary protocols, such as SSH, LDAP, or a database such as MySQL, cannot be exposed with routes and ingress resources.
+
+
+# Kubernetes Services
+
+You can expose the non-http services that a VM provides by using a node port or a load balancer service. The node port or load balancer service gives you direct access to the VM service port from outside the OpenShift cluster.
+
+## Configure Node Port Service Resources
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: prod
+spec:
+  type: NodePort
+  selector:
+    vmtype: linux
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+      nodePort: 30336
+```
+
+## Load Balancer Services
+
+You can use a load balancer service to expose the VM network services on a fixed IP address. Unlike using a node port service, the load balancer service exposes a single IP address that does not change when the VM is moved to another node.
+
+MetalLB is a load balancer implementation for Kubernetes that provides a load balancing service for clusters that do not run on a cloud provider, such as a bare metal clusters or virtualized clusters that are deployed in private environments.
+
+
+
+Install the the MetalLB operator
+
+
+Create the IPAddress Pool
+
+```yml
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: my-ip-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.1.100-192.168.1.150  # Example range in a routable subnet
+  autoAssign: true
+  avoidBuggyIPs: false  # You can set a flag to avoid IP addresses
+                        # that might cause issues with certain network equipment
+```
+> **_NOTE:_**  If the IP addresses in the pool are part of a routable subnet within your network.
+
+```
+# oc get pod virt-launcher-xxx-xxxxx --show-labels
+...kubevirt.io/domain=xxx
+```
+
+```
+# oc expose virt-launcher-vm1-4htsh  --name=vm1 \
+  --type=LoadBalancer --selector kubevirt.io/domain=xxx --port=22 \
+  -o yaml --dry-run=client | tee service.yaml
+```
+
+```
+oc apply -f service.yaml
+```
+
+```
+oc get services
+NAME   TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)        AGE
+xxx    LoadBalancer   172.30.157.246   192.168.50.22   22:30826/TCP   1m
+```
+
+```
+oc describe svc xxx
+```
+
+```
+oc get vmi
+NAME   AGE     PHASE     IP          NODENAME   READY
+vm1    5m      Running   10.8.2.92   worker02   True
+```
+
+```
+oc get endpoints
+NAME   ENDPOINTS      AGE
+vm1    10.8.2.92:22   2m
+```
+
+```
+ssh developer@192.168.50.22
+Warning: Permanently added '192.168.50.22' (ED25519) to the list of known hosts.
+```
