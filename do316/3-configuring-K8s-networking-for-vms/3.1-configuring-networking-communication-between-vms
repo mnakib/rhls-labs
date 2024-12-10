@@ -106,6 +106,16 @@ Create a service of the ClusterIP type linked to the mariadb-server VM.. Use the
 # oc get service,vmi,endpoints
 ```
 
+```
+# virtctl connect mariadb-server
+```
+
+```
+# mysql_secure_installation
+```
+
+
+
 
 ## 4- Verify the database connectivity.
 
