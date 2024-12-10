@@ -1,0 +1,134 @@
+The example below shows how to configure a Kuberentes service that establishes a connection between a virtual machine that is running a MariaDB server and a virtual machine that is running a database client.
+
+The steps are:
+
+1- Create two VMs; a mariadb server and mariadb client.
+
+2- Label the mariadb-server VM.
+
+3- Create a service of the ClusterIP type.
+
+4- Verify the database connectivity from the mariadb-client VM.
+
+
+## 1- Create two VMs; a mariadb-server and mariadb-client
+
+
+Install mariadb-server service on the mariadb-server VM and mysql client on the mariadb-client.
+
+On the mariadb-server VM
+
+```
+# virtctl console mariadb-server
+```
+
+```
+# sudo -i
+```
+
+```
+# dnf install mariadb-server -y
+```
+
+```
+# systemctl enable --now mariadb-server
+```
+
+```
+mysql_secure_installation
+```
+
+On the mariadb-client VM
+
+```
+# virtctl console mariadb-client
+```
+
+```
+# sudo -i
+```
+
+```
+# dnf install mysql telnet -y
+```
+
+
+## 2- Label the mariadb-server VM
+
+```
+# oc edit vm mariadb-server
+```
+
+```yml
+...
+spec:
+  dataVolumeTemplates:
+  ...
+  runStrategy: RerunOnFailure
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mariadb-server
+        flavor.template.kubevirt.io/small: "true"
+        kubevirt.io/domain: mariadb-server
+        kubevirt.io/size: small
+        ...
+``` 
+
+```
+# oc delete vmi 
+```
+
+```
+# watch oc get vmi,pods -l app=mariadb-server
+```
+
+## 3- Create a service of the ClusterIP
+
+Create a service of the ClusterIP type linked to the mariadb-server VM.. Use the _app=mariadb-server_ label for the selector. The service must listen on TCP port _3306_ and forward the traffic to the VM on that port.
+
+```
+# virtctl expose vmi mariadb-server --name mariadb \
+  --type ClusterIP --port 3306 --target-port 3306
+```
+
+```
+# oc get service mariadb -o yaml
+...
+  selector:
+    app: mariadb-server 1
+    flavor.template.kubevirt.io/small: "true"
+    ...
+```
+
+```
+# oc get service,vmi,endpoints
+```
+
+
+## 4- Verify the database connectivity.
+
+Verify the database connectivity from the mariadb-client VM.
+
+```
+# virtctl console mariadb-client
+```
+
+Install telnet and nc packages to test the connection
+```
+# dnf install telnet mysql nc -y
+```
+
+```
+# nc -zv mariadb-server 3306
+```
+
+```
+# telnet mariadb-server 3306
+```
+
+```
+mysql -uuser - h mariadb-server 
+```
+

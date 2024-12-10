@@ -1,0 +1,78 @@
+This example goes through the step on how configure a service and a route to establish external access for a web server that is hosted on a virtual machine.
+
+The steps are as below
+
+1- Create a VM
+
+2- Create a service of the ClusterIP type.
+
+3- Confirm that the service endpoint resolves to the virtual machine instance.
+
+4- Create a route to expose the virtual machine for external access.
+
+
+### 1- Create a VM
+
+Create a VM named _web-server_ in the _test-web-servers_ project. Install Apache. Edit the VM and the **app: helloworld** label.
+
+```
+# oc project web-servers
+```
+
+```
+# oc edit vm/hello-web
+```
+
+```yml
+...
+spec:
+  dataVolumeTemplates:
+  ...
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: web-server
+        flavor.template.kubevirt.io/small: "true"
+        kubevirt.io/domain: web-server
+        kubevirt.io/size: small
+        ...
+```
+
+```
+# oc delete vmi web-server
+```
+
+```
+# watch oc get vmi,pods -l app=web-server
+```
+
+
+
+### 2- Create a service of the ClusterIP type.
+
+Create a service named hello-web with the ClusterIP type. Use the app: helloworld label for the selector. The hello-web service must accept traffic on TCP port 80 and forward it to the VM on port 80.
+
+```
+# oc create service clusterip web-server \
+  --tcp=80:80 --dry-run=client -o yaml > web-server-svc.yaml
+```
+
+> **_NOTE:_** Make sure the selector is configured to app: web-server
+
+```
+# oc apply -f web-server-svc.yaml
+```
+
+
+### 3- Confirm that the service endpoint resolves to the virtual machine instance.
+
+```
+# oc get vmi,endpoints
+```
+
+### 4- Create a route to expose the virtual machine for external access.
+
+```
+# oc expose svc web-server
+```
