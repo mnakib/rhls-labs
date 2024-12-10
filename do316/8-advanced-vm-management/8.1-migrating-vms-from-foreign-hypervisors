@@ -1,0 +1,11 @@
+Install **MTV** and create the Create **ForkliftController**
+
+Refresh the Web console and confirm the Migration page is available
+
+Create the **vsphere-ova** OVA provider
+source is utility.lab.example.com:/exports-ocp4/ova
+
+
+
+
+
