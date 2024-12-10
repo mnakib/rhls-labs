@@ -6,7 +6,7 @@ The operator reports the node network configuration, validates configuration syn
 
 The NMState operator provides three API resources for managing the network configuration:
 
-- **NodeNetworkState:** exists on each cluster node and is periodically updated to include the state of the network for that node
+**- NodeNetworkState:** exists on each cluster node and is periodically updated to include the state of the network for that node
 
 - **NodeNetworkConfigurationPolicy:** describes the intended network configuration for OpenShift nodes. You can create and manage node network interfaces, such as declaring a Linux bridge, with a node network configuration policy.
 
