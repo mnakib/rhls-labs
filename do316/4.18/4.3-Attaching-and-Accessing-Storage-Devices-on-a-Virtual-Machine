@@ -1,0 +1,7 @@
+Create two Web VMs.
+Attach ISCSI disk to VM1 and make it persistent. Format it and mount it, then put some content on it. Test the Web content is accessible
+Detach the disk from VM1 then attach it to VM2. Make is persistent.
+Dont' restart the VMs for now.
+In VM1, attach a VirtIO disk by cloning it from the previous disk PVC.
+Restart VM1 and check the disk is mounted with the same UIID disk, as it was cloned from previous disk PVC.
+Expand disks in both VMs and extend their filesystem.
