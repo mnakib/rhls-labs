@@ -1,0 +1,23 @@
+Using the `virtctl`, OpenShift Virtualization can export VMs and their associated disks to import them into another OpenShift Virtualization cluster.
+
+
+### Exporting a VM
+
+```bash
+cat > export-fedora-vm.yaml
+```
+
+```yaml
+apiVersion: export.kubevirt.io/v1beta1
+kind: VirtualMachineExport
+metadata:
+  name: fedora-export
+  namespace: vms
+spec:
+  source:
+    apiGroup: "kubevirt.io"
+    kind: VirtualMachine
+    name: fedora-vm
+  ttlDuration: 1h
+```
+
