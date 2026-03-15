@@ -1,23 +1,86 @@
 Using the `virtctl`, OpenShift Virtualization can export VMs and their associated disks to import them into another OpenShift Virtualization cluster.
 
 
-### Exporting a VM
+### Create a working project
 
-```bash
-cat > export-fedora-vm.yaml
-```
+oc new-project storage-export-demo
 
-```yaml
-apiVersion: export.kubevirt.io/v1beta1
-kind: VirtualMachineExport
-metadata:
-  name: fedora-export
-  namespace: vms
-spec:
-  source:
-    apiGroup: "kubevirt.io"
-    kind: VirtualMachine
-    name: fedora-vm
-  ttlDuration: 1h
-```
+### Create a VM and configure its motd file
+
+Create a VM named `httpd-server` inside the project
+
+oc get vm -n storage-export-demo
+
+Login to the VM and update its motd file
+
+virtctl console httpd-server
+
+cat /etc/motd
+
+sudo su
+
+echo "Authorized Use Only" > /etc/motd
+
+cat /etc/motd
+Authorized Use Only
+
+Type exit twice and type Press Ctrl+] to exit the console.
+
+
+### Export the VM
+
+Shut it down first
+
+virtctl stop httpd-server
+
+Verify its status
+
+oc get vm
+
+Check it DV name
+
+oc get datavolume
+
+Export the VM using the `virtctl vmexport download` command
+
+virtctl vmexport download httpd-server \
+  --vm=httpd-server --volume=httpd-server-volume \
+  --output=httpd-server-pvc.img.gz
+
+
+### Create the `backup-vm` namespace and import the `httpd-server` VM data volume.
+
+oc new-project backup-vm
+
+Use the `virctl image-upload` command to import the `httpd-server` VM data volume into the `backup-vm` project
+
+virtctl image-upload dv httpd-server --size=10Gi \
+  --storage-class ocs-external-storagecluster-ceph-rbd-virtualization \
+  --image-path=httpd-server-pvc.img.gz
+
+### Create a VM from the httpd-server VM data volume in the backup-vm project
+
+virtctl create vm --name=httpd-server-backup \
+  --volume-pvc=src:httpd-server | oc apply -f -
+
+oc get vm
+
+Login to the console and check the configred motd message appears
+
+Authorized Use Only
+virtctl console httpd-server-backup
+
+
+### Clean up
+
+oc delete project storage-export-demo
+
+oc delete project backup-vm
+
+rm httpd-server-pvc.img.gz
+
+
+
+
+
 
