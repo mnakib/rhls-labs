@@ -1,0 +1,91 @@
+
+### NMState
+
+[NMState](https://nmstate.io/) is is a library and CLI tool (nmstatectl) used to manage Linux host networking settings in a declarative manner. 
+
+Instead of running a series of manual commands (imperative approach), you describe the desired network state (e.g., IP addresses, routes, DNS, or bridges) using a structured **YAML** or **JSON** schema. `Nmstate` then calculates the difference between the current and desired states and applies only the necessary changes.
+
+NMState is very similar to the Canonical [NetPlan](https://netplan.readthedocs.io/en/stable/), as both are declarative networking tools that use YAML files to define a "desired state" rather than requiring manual commands.
+
+
+### NMState Operator
+
+The [**Kubernetes NMState Operator**](https://operatorhub.io/operator/kubernetes-nmstate-operator) is a layer built on top of the NMState engine specifically for **Kubernetes** and **OpenShift** clusters.   
+
+
+NodeNetworkState (NNS) - to display the network state
+
+NodeNetworkConfigurationPolicy (NNCP) - to define the desired network state
+
+NodeNetworkConfigurationEnactement (NNCE) - to reconcile the NNS with the NNCP.
+
+PlacementRule to configure on which node the VM should run.
+
+
+
+## DEMO
+
+### Check the NMState Operator is installed
+
+oc get operators | grep -i nmstate
+
+oc get all -n openshift-nmstate
+
+### Create a NMState Custom Resource
+
+In order to configure the NMState Operator, a NMState Custom Resource needs to be created if not already done.
+
+OpenShift Web Console > Installed Operators > `openshift-nmstate` project > **Kubernetes NMState Operator** > Create instance > Leave all values to default and click **Create**
+
+
+### Create a Node Network Configuration Policy
+
+Create a `Node Network Configuration Policy` to configure an OVS bridge using the `ens4` interface
+
+OCP Web Console > Node Network Configuration Policy
+
+- Policy Name: br0-ovs-ens4
+- Interace name: br0-ovs
+- Type: Open vSwitch bridge
+- IP Configuration: IPv4 - DHCP
+- Port: ens4
+
+**Open vSwitch bridge mapping**
+
+- OVN localnet name: br0-network
+- OVS bridge name: br0-ovs
+
+
+### Create a Network Attachment Definition
+
+Create a Network Attachment Definition and map it to the `br0-network` OVS localnet logical network.
+
+- Name: br0-network
+- Network Type: OVN Kubernetes secondary localnet network
+- Bridge mapping: br0-network
+
+### Attach Network Attachment Definition to a VM
+
+Add the NAD to a VM
+
+### Check the network connection in the VM
+
+Migrate or restart the VM
+
+nmcli con s
+
+ip a
+
+ping the VM from the utility VM
+
+
+
+
+
+
+
+
+
+
+
+
