@@ -1,0 +1,183 @@
+
+Use Network Policies to implement segmentation and restrict connections.
+
+OCP supports two types of Network Policies: `NetworkPolicy` and `AdminNetworkPolicy`.
+
+ANP are cluster-wide and have higher priority.
+
+OVN-Kubernetes in OCP implements both types of Network Policies.
+
+Network Policies are additive, so the union of all matching policies determines the allowed traffic
+
+By default, all pods and VMs in a project are accessible from all other pods in or outside the project.
+
+Thus, to secure a namespace, a `default-deny-all` network policy is commonly first created. 
+
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: <NamespaceName>
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+```
+
+
+
+```bash
+# Create and label the db project
+oc new-project db-demo && oc label namespace db-demo name=db-demo
+
+# Create and label the web project
+oc new-project web-demo && oc label namespace web-demo name=web-demo
+
+Create two VMs named db and web in the netpol-db-demo and netpol-web-demo consecutively
+
+```bash
+cat > cloud-config.yaml
+```
+
+```yaml
+#cloud-config
+user: admin
+password: redhat
+chpasswd: { expire: False }
+ssh_pwauth: True
+```
+
+```bash
+# Encode the cloud-config file
+base64 -w0 cloud-config.yaml > cloud-config.b64
+```
+
+```bash
+virtctl create vm \
+  --name=db \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-mariadb \
+  --namespace db-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)"
+```
+
+```bash
+virtctl create vm \
+  --name=web \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-helloworld \
+  --namespace web-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)"
+```
+
+### Test connectivity between VMs
+
+```bash
+# Check both VMs are running
+oc get vm,vmi -n db-demo -o wide
+oc get vm,vmi -n web-demo -o wide
+
+```bash
+virtctl console web -n netpol-web-demo
+```
+    Credentials are: admin/redhat
+
+```bash
+# Ping should work
+ping <DB-VM-IP>
+```
+```bash
+# Connectivity to port 3306 should work
+curl -v <DB-VM-IP>:3306
+```
+
+### Create a deny all policy
+
+Create a deny all policy in the `netpol-db-demo` namespace
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: db-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+```
+
+```bash
+oc get netpol -n db-demo
+```
+
+### Create a policy to allow only port 3306 from the `web-demo` from the `web` VM
+
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mariadb-policy
+  namespace: db-demo
+spec:
+  podSelector:
+    matchLabels:
+      vm.kubevirt.io/name: db
+  policyTypes: 
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: web-demo
+      podSelector:
+        matchLabels:
+          vm.kubevirt.io/name: web
+    ports:
+      - protocol: TCP
+        port: 3306
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openshift-dns
+```
+
+```bash
+oc get netpol -n db-demo
+
+# Get more info about the policy
+oc describe netpol -n db-demo mariadb-policy
+```
+
+
+### Test the connectivity
+
+```bash
+# Ping should NOT work
+ping <DB-VM-IP>
+```
+
+```bash
+# Connectivity to port 3306 should work
+curl -v <DB-VM-IP>:3306
+```
+
+
+
+
+
+
+
+
+
+
+
