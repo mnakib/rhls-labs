@@ -99,10 +99,10 @@ oc new-project web-demo
 
 ```bash
 virtctl create vm \
-  --name=db \
+  --name=web \
   --instancetype=u1.small \
   --preference=rhel.10 \
-  --volume-datasource=src:openshift-virtualization-os-images/rhel10-mariadb \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-helloworld \
   --namespace web-demo \
   --cloud-init-user-data "$(cat cloud-config.b64)"
 ```
@@ -132,4 +132,25 @@ mkdir -pv /var/log/httpd
 
 # Mount /dev/sda to /var/log/httpd
 mount  /dev/sda /var/log/httpd
+```
+
+Mount it /etc/fstab
+
+```bash
+restorecon -FRv /var/log/httpd 
+```
+### Clean up
+
+```bash
+# Delete the PV
+oc delete pv iscsi-pv
+
+# Stop  and delete the VM
+virtctl stop web && oc delete vm web
+
+# Delete the PVC
+oc delete pvc web-logs
+
+# Delete the namespace
+oc delete ns web-demo
 ```
