@@ -1,0 +1,135 @@
+
+## DEMO
+
+The iSCSI is installed on VM named **server**. Connect to it and and check its iSCSI configuration.
+
+```bash
+# SSH to the server VM via the utility server
+ssh 192.168.51.40 -J utility
+
+# Check its IP address, which is 192.168.51.40/24
+ip a s
+```
+
+### Check the list of iSCSI targets
+
+
+```bash
+# SSH to the server
+targetcli
+```
+
+```bash
+ls
+```
+
+```bash
+...
+# There is
+# iSCSI target set up named iqn.2021-10.com.example:server.disk1
+# Trusted Portal Group named tpg1
+# The ACL allows access for an initiator system named iqn.2021-10.com.example:client-server.disk1
+# To use a LUN named lun0
+# And all this is available on the IP:Port 192.168.51.40:3260
+...
+```
+
+### Create the PV
+
+cat > pv.yaml
+
+```bash
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: iscsi-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Block
+  accessModes:
+    - ReadWriteOnce
+  claimRef:
+    namespace: web-demo
+    name: web-logs
+  persistentVolumeReclaimPolicy: Retain
+  iscsi:
+    targetPortal: 192.168.51.40:3260
+    iqn: iqn.2021-10.com.example:server.disk1
+    lun: 0
+    initiatorName: iqn.2021-10.com.example:client-server.disk1
+    # fsType: ext4
+    # readOnly: false
+```
+
+```bash
+oc get pv
+```
+
+### ### Create the PVC
+
+Create a PVC named `web-logs` to bind to this PV
+
+```bash
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: web-logs
+  namespace: web-demo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""
+  volumeMode: Block
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: iscsi-pv
+```
+
+Check that the pvc is bound
+
+```bash
+oc get pvc
+```
+
+```bash
+oc new-project web-demo
+```
+
+```bash
+virtctl create vm \
+  --name=db \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-mariadb \
+  --namespace web-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)"
+```
+
+From the OpenShift Web Console, add a disk of type `Volume` to the `web` VM, from the PVC named `web-logs`.
+
+Connect to the VM console and check that the disk has been added to the VM.
+
+```bash
+lsblk -fp
+```
+```bash
+...
+/dev/sda
+...
+```
+
+Format the disk and mount it
+
+```bash
+mkfs.ext4 /dev/sda
+```
+
+```bash
+# Creat a mounting to store the httpd log files
+mkdir -pv /var/log/httpd
+
+# Mount /dev/sda to /var/log/httpd
+mount  /dev/sda /var/log/httpd
+```
