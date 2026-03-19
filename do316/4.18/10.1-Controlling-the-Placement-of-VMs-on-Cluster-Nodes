@@ -1,0 +1,215 @@
+
+### Configure the Run Strategy
+
+```bash
+oc edit vm <VMName>
+```
+<pre>
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this
+# file will be reopened with the relevant failures.
+#
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+...
+spec:
+  dataVolumeTemplates:
+...
+  <b>runStrategy: RerunOnFailure</b>
+  template:
+...
+</pre>
+
+
+### Virtualization Node Placement
+
+#### Node Selector
+
+First, label the node
+
+```bash
+oc label node master01 gpu: true
+```
+
+Then, configure the VM `nodeSelector` setting
+
+<pre>
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: vm-node-selector
+...
+spec:
+  template:
+    spec:
+      <b>nodeSelector:
+        gpu: true</b>
+...
+</pre>
+
+You can add multiple node selectors to a VM. If the node does not include all the labels, then the VM is not scheduled on that node.
+
+
+
+#### Node Affinity Rules
+
+Affinity refers to a VM property that controls the VM preference for a node. Node Affinity provides a more flexible way to specify constraints on node selection. 
+
+In below example, the required node affinity rule specifies that the VM must run on a node with the `cpu=fast` label __or__ with the `cpu=medium` label.
+
+```bash
+oc edit vm <VMName>
+```
+
+<pre>
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: vm-node-affinity
+spec:
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          <b>requiredDuringSchedulingIgnoredDuringExecution:</b>
+             nodeSelectorTerms:
+              - matchExpressions:
+                - key: cpu
+                  operator: In
+                  values:
+                  - fast
+                  - medium
+          <b>preferredDuringSchedulingIgnoredDuringExecution:</b>
+          - preference:
+              matchExpressions:
+              - key: gpu
+                operator: In
+                values:
+                - true
+            weight: 50
+...
+</pre>
+
+
+#### Workload Affinity Rules and Anti-affinity Rules
+
+A workload affinity rule, also known as a pod affinity rule, is a scheduling constraint that places a new VM on a node based on the labels of VMs or pods that are already running on that node. Anti-affinity is a VM property that restricts or prevents the placement of a VM on a node.
+
+With workload affinity and anti-affinity rules, you can control the nodes for your VM based on the labels of other VMs or pods.
+
+Below example shows a workload affinity rule that specifies that the VM must run on a node that has a running VM with the `app=database` label, and it must not run on a node that has a running VM with the `app=web` label.
+
+
+```bash
+oc edit vm <VMName>
+```
+<pre>
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: vm-workload-affinity
+spec:
+  template:
+    spec:
+      affinity:
+        <b>podAffinity:</b>
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - database
+              topologyKey: kubernetes.io/hostname
+        <b>podAntiAffinity:</b>
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - web
+              topologyKey: kubernetes.io/hostname
+...
+</pre>
+
+
+#### Taints and Tolerations
+
+You can configure taints on nodes so that only VMs with a matching toleration can be scheduled. The node with a taint repels all the VMs except those VMs that have a toleration for that taint. A toleration specifies that a VM can be scheduled on a node if the VM's toleration matches the taint on the node. However, if a VM is configured to tolerate a taint, then it is not required to schedule the VM on a node that is configured with that taint.
+
+First taint the node.
+
+```bash
+kubectl taint nodes <NodeName> virtualization=true:NoSchedule
+```
+
+Then, configure the VM to tolerate that node taint.
+
+
+<pre>
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: <VMName>
+...
+spec:
+  template:
+    spec:
+      <b>tolerations:</b>
+        - key: <b>"key"</b>
+          operator: "Equal"
+          value: <b>"virtualization"</b>
+          effect: <b>"NoSchedule"</b>
+</pre>
+
+
+#### Node Placement Rules for Virtualization Components
+
+In addition to individual VM placement, you can also configure node placement rules for OpenShift Virtualization components. Edit the spec.infra.nodePlacement and spec.workloads.nodePlacement objects of the HyperConverged CR to specify the nodes for infrastructure and workload resources.
+
+In below example, node selectors specify the nodes for OpenShift Virtualization components:
+
+<pre>
+apiVersion: hco.kubevirt.io/v1beta1
+kind: HyperConverged
+metadata:
+  name: kubevirt-hyperconverged
+  namespace: openshift-cnv
+spec:
+  infra:
+    nodePlacement:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+  workloads:
+    nodePlacement:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
+</pre>
+
+	
+__Infrastructure resources__ must be scheduled on nodes with the `node-role.kubernetes.io/infra: ""` label.
+
+__Workload resources__ must be scheduled on nodes with the `node-role.kubernetes.io/worker: ""` label.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
