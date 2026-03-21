@@ -1,0 +1,69 @@
+### User-defined Networks
+
+OpenShift Virtualization User-Defined Networks (UDN) are customizable network segments built on OVN-Kubernetes that allow you to create isolated, project-specific networks for Virtual Machines (VMs) and pods. Unlike the default shared pod network, a UDN enables you to define your own IP subnets and topology, providing a networking experience similar to traditional virtualization platforms like OpenStack or VMware.
+
+In this scenario, we'll show two capabilities of user-defined networks:
+- IP address persistence for VMs after reboots
+- Two namespaces with identical subnets, with no conflict issues
+
+#### Create the namespace
+
+OpenShift requires this specific label (`k8s.ovn.org/primary-user-defined-network`) on any namespace that will use a UDN as its primary network. This label must be present at the time of namespace creation. 
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vms-demo
+  labels:
+    # This label is MANDATORY for Primary UDN support
+    k8s.ovn.org/primary-user-defined-network: ""
+```
+
+#### Define the UDNs
+
+```yaml
+apiVersion: k8s.ovn.org/v1
+kind: UserDefinedNetwork
+metadata:
+  name: isolated-network
+  namespace: vms-demo
+spec:
+  topology:
+  layer2:
+    role: Primary
+    ipam:
+      lifecycle: Persistent 
+    subnets:
+      - cidr: 10.70.0.0/24
+```
+
+#### Create a VM inside the UDN namespace
+
+Create a VM and see how its IP address doensn't change when restarting or migrating it
+
+```bash
+# Create a cloud-config file for storing the VM credentials
+cat > cloud-config.yaml
+```
+
+```yaml
+#cloud-config
+user: admin
+password: redhat
+chpasswd: { expire: False }
+ssh_pwauth: True
+```
+
+```bash
+# Encode the cloud-config file
+base64 -w0 cloud-config.yaml > cloud-config.b64
+```
+
+virtctl create vm \
+  --name=web \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-helloworld \
+  --namespace vms-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)"
