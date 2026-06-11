@@ -1,0 +1,140 @@
+
+## High Availability with Hypervisors
+
+### Fencing Hosts for VM Integrity
+
+When a virtualization host loses connectivity to the cluster and reaches an unknown state, it is important to isolate the node to prevent further access to virtual machine resources that could cause data loss or corruption.
+
+A hypervisor can fence a host by:
+
+- Shutting down VM instances and cluster services to disconnect the host from the cluster.
+
+- Removing access to VM resources to isolate the host from applications storage and from the network.
+
+- Using an out-of-band management agent to reboot or power off the host to ensure that VMs are not running on that host
+
+
+### Load Balancing with Hypervisors
+
+By default, a stand-alone hypervisor does not include the software technology to load balance VMs. You must configure the load balancer, readiness and liveness probes, and watchdog functions for health monitoring, in addition to configuring the hypervisor.
+
+
+### Demo
+
+- Create two web servers VMs
+- Create web service for the web servers
+- Create a route with a custom cookie for the `web` service.
+- Observe the session stickiness that the custom cookie provides.
+- Stop one of the web servers to observe the service resilience and the automatic load balancing from Kubernetes.
+
+### Create two web servers VMs
+
+Create two web VM names `web1` and `web2` in the `ha-demo` project
+
+```bash
+# Create a working directory
+mkdir ~/ha-demo && ~/ha-demo
+```
+
+```bash
+# Create ha-demo project
+oc new-project ha-demo
+```
+```bash
+# Create a cloud-config file for storing the VM credentials
+cat > cloud-config.yaml
+```
+```bash
+#cloud-config
+# Add users to the system.
+user: admin
+password: redhat
+chpasswd: { expire: False }
+ssh_pwauth: True
+
+# boot commands
+bootcmd:
+- echo "<h1>Welcome to $(hostname -f)" > /var/www/html/index.html
+```
+```bash
+# Encode the cloud-config file
+base64 -w0 cloud-config.yaml > cloud-config.b64
+```
+
+```bash
+virtctl create vm \
+  --name=web1 \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-helloworld \
+  --namespace web-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)"
+```
+```bash
+virtctl create vm \
+  --name=web2 \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10-helloworld \
+  --namespace web-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)"
+```
+
+```bash
+# Patch the VMs
+oc patch vm vm1 --type='merge' -p '{"spec":{"template":{"metadata":{"labels":{"app":"web"}}}}}'
+oc patch vm vm1 --type='merge' -p '{"spec":{"template":{"metadata":{"labels":{"app":"web"}}}}}'
+```
+
+
+### Create web service for the web servers
+
+Create a `web` service for the web servers, and verify that the service dispatches requests between the web servers
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ha-demo
+spec:
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
+
+### Create a route with a custom cookie for the `web` service.
+
+```bash
+oc create route edge web --service web --port 80/tcp
+```
+
+Use the `curl` command to send requests to the 1 route and confirm that the route dispatches requests to both `web1` and `web2` VMs, and observe that the session cookie value changes.
+
+```bash
+The route dispatches requests to both web1 and web2 VMs
+for i in {1..10} do; curl curl -I https://web-ha-demo.apps.ocp4.example.com; done;
+```
+
+
+### Configure cookie session stickiness in the route
+
+Configure cookie session stickiness in the route and observe the session stickiness that the custom cookie provides.
+
+```bash
+oc annotate route web router.openshift.io/cookie_name=hello
+```
+
+Run the `curl` command several times with the `-b` option to send the cookie with the request and confirm that the same server is servicing all requests.
+
+```bash
+curl -I \
+  https://hello-ha-loadbalance.apps.ocp4.example.com \
+  -b hello=21d634b988f72b219865e1dc6a1e2aa0
+```
+
+
+
