@@ -1,0 +1,281 @@
+
+# Configuring Health Probes for Virtual Machines
+
+## Configuring Health Probes
+
+For monitoring applications that run inside VMs, Kubernetes provides two types of probes:
+
+__Liveness probes:__ determine whether the application is in a healthy state.
+
+__Readiness probes:__ determine whether the application is ready to serve requests.
+
+Kubernetes provides the following methods for monitoring your application with probes:
+
+- __HTTP GET__
+
+- __TCP socket__
+
+- __Guest agent ping__
+
+
+Probes can be added to VMs' yaml configuration files.
+
+```yaml
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+...
+spec:
+  ...
+  template:
+    metadata:
+    ...
+    spec:
+      livenessProbe:
+        tcpSocket: 1
+          port: 3306
+        initialDelaySeconds: 120
+        periodSeconds: 20
+...
+```
+
+
+```yaml
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+...
+spec:
+  ...
+  template:
+    metadata:
+    ...
+    spec:
+      readinessProbe:
+        httpGet: 1
+          path: /health
+          port: 8080
+        initialDelaySeconds: 120
+        periodSeconds: 20
+        timeoutSeconds: 10
+        failureThreshold: 3
+        successThreshold: 3
+...
+```
+
+
+## Configure a Watchdog Device
+
+The watchdog feature detects and restarts unresponsive operating systems. The feature relies on two components: 
+- A hardware component, which sets by default a 30-second timer. When the timer expires, the component triggers a system restart. On bare-metal machines, a chipset provides the feature. For VMs, OpenShift Virtualization emulates the chipset.
+
+- A software component, which the operating system runs, to reset the hardware timer regularly to prevent it from expiring.
+
+Watchdogs monitor only operating systems, and do not detect application failures. For example, a watchdog does not restart the system if the application hangs but the operating system is still responding.
+
+```yaml
+oc edit vm mariadb-server
+# Please edit the object below. Lines beginning with a '#' will be ignored,
+# and an empty file will abort the edit. If an error occurs while saving this
+# file will be reopened with the relevant failures.
+#
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+...
+spec:
+  ...
+  template:
+    metadata:
+    ...
+    spec:
+      domain:
+        ...
+        devices:
+          ...
+          rng: {}
+          watchdog:
+            i6300esb:
+              action: poweroff
+            name: testwatchdog
+...
+```
+
+## Demo
+
+- Create a VM and its corresponding service and route
+- Declare readiness probes to VMs.
+- Add watchdog devices to VMs.
+- Test the watchdog device.
+
+#### Create a VM named probes-vm in the descheduler-demo namespace
+
+```bash
+# Create a cloud-config file for storing the VM credentials
+cat > cloud-config.yaml
+```
+
+```yaml
+#cloud-config
+# Add users to the system.
+user: admin
+password: redhat
+chpasswd: { expire: False }
+ssh_pwauth: True
+
+# boot commands
+bootcmd:
+- echo "<h1>Welcome to $(hostname -f)" > /var/www/html/index.html
+```
+
+```bash
+# Encode the cloud-config file
+base64 -w0 cloud-config.yaml > cloud-config.b64
+```
+
+```bash
+oc new-project probes-demo
+```
+
+```bash
+# Create a VM named probes-vm
+virtctl create vm \
+  --name=probes-vm1 \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10 \
+  --namespace probes-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)" > probes-vm.yaml
+```
+
+```bash
+# Create a VM named probes-vm
+virtctl create vm \
+  --name=probes-vm2 \
+  --instancetype=u1.small \
+  --preference=rhel.10 \
+  --volume-datasource=src:openshift-virtualization-os-images/rhel10 \
+  --namespace probes-demo \
+  --cloud-init-user-data "$(cat cloud-config.b64)" > probes-vm.yaml
+```
+
+```bash
+# Patch the VM to label it
+oc patch vm probes-vm --type='merge' -p '{"spec":{"template":{"metadata":{"labels":{"app":"web"}}}}}'
+```
+
+```bash
+# Expose the VM by creating a service
+virtctl expose vm probes-vm1 \
+  --name=probes-service --type=ClusterIP \
+  --port=80 --target-port=80
+```
+```bash
+# Optional - Expose the VM by creating a NodePort service
+virtctl expose vm probes-vm1 \
+  --name=probes-service-np --type=NodePort \
+  --port=8080 --target-port=80
+```
+
+```bash
+oc expose service probes-service --name=probes-route
+```
+
+```bash
+curl -I https://probes-route-probes-demo.apps.ocp4.example.com
+```
+
+#### Declare readiness probes to VMs.
+
+Patch the VM to add the readiness probe
+
+```bash
+kubectl patch vm probes-vm --type='merge' -p '
+spec:
+  template:
+    spec:
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 30
+'
+```
+
+Restart the VM so that changes take effect
+
+```bash
+virtctl restart probes-vm1
+virtctl restart probes-vm2
+```
+
+Test the probe by stopping the httpd service on the `probes-vm` VM and observe the effect on the service.
+
+```bash
+virtctl ssh probes-vm1 -c "sudo systemctl stop httpd"
+```
+
+The virt-launcher pod that is associated with the `probes-vm1` VM is not ready, and consequently the service no longer dispatches requests to that VM.
+
+```bash
+curl -I https://probes-route-probes-demo.apps.ocp4.example.com
+```
+
+#### Add watchdog devices to VMs
+
+Add a watchdog device the `probes-vm2`
+
+```bash
+oc edit vm probes-vm2
+```
+```yaml
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:a
+...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      architecture: amd64
+      domain:
+        devices:
+          watchdog:
+            name: testwatchdog
+            i6300esb:
+              action: poweroff
+...
+```
+
+Restart the VM to appy the changes
+
+```bash
+virtctl restart probes-vm2
+```
+
+#### Test the watchdog device
+
+Connect to the VM
+
+```bash
+virtctl console probes-vm2
+```
+
+The Linux kernel regularly resets the watchdog hardware timer by writing to the /﻿dev/watchdog device file. However, if the kernel detects that another process accesses the file in write mode, then the kernel stops refreshing the timer. The kernel no longer considers it necessary to manage the timer because the new process took over this function.
+
+Use the echo command to simulate a process that opens the /dev/watchdog device file in write mode.
+
+```
+sudo -i
+
+echo > /dev/watchdog
+```
+
+Because the kernel stops refreshing the timer, the console shows the kernel error message about the watchdog not being reset. After 30 seconds, the watchdog device powers off the VM.
+
+
+
+
+
+
